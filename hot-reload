@@ -1,0 +1,22 @@
+#!/usr/bin/env php
+<?php
+
+use Amp\Loop;
+use Vajexal\HotReload\HotReloadWatcher;
+
+require_once 'vendor/autoload.php';
+
+if (count($_SERVER['argv']) <= 1) {
+    echo 'Usage: ./vendor/bin/hot-reload server.php', PHP_EOL;
+    exit(1);
+}
+
+Loop::run(function () {
+    $hotReloadWatcher = new HotReloadWatcher('.', ['/usr/bin/env', 'php', ...array_slice($_SERVER['argv'], 1)]);
+
+    Loop::onSignal(SIGINT, static function (string $watcherId) use ($hotReloadWatcher) {
+        Loop::cancel($watcherId);
+
+        yield $hotReloadWatcher->unwatch();
+    });
+});

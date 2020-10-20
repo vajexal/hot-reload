@@ -1,0 +1,35 @@
+{
+    "name": "vajexal/hot-reload",
+    "description": "Hot reload php scripts",
+    "keywords": [
+        "hot reload",
+        "amphp"
+    ],
+    "require": {
+        "php": "^7.4",
+        "amphp/amp": "^2.5",
+        "amphp/byte-stream": "^1.8",
+        "amphp/file": "^1.0",
+        "amphp/process": "^1.1",
+        "ext-pcntl": "*"
+    },
+    "require-dev": {
+        "amphp/phpunit-util": "^1.4",
+        "amphp/http-server": "^2.1",
+        "amphp/http-client": "^4.5",
+        "amphp/php-cs-fixer-config": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Vajexal\\HotReload\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Vajexal\\HotReload\\Tests\\": "tests"
+        }
+    },
+    "bin": [
+        "hot-reload"
+    ]
+}

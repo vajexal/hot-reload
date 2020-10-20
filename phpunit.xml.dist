@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit verbose="true"
+         colors="true"
+         cacheResult="false">
+    <testsuites>
+        <testsuite name="Hot Reload Test Suite">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+    <php>
+        <env name="AMP_DEBUG_TRACE_WATCHERS" value="true"/>
+    </php>
+</phpunit>
