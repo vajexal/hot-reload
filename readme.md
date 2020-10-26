@@ -3,7 +3,7 @@ Attempt to make hot reloading for php scripts ([Amp](https://amphp.org) for exam
 ### Installation
 
 ```bash
-composer install vajexal/hot-reload --dev
+composer require vajexal/hot-reload:dev-master --dev
 ```
 
 ### Usage
