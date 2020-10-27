@@ -1,6 +1,7 @@
 #!/usr/bin/env php
 <?php
 
+use Amp\File\StatCache;
 use Amp\Loop;
 use Vajexal\HotReload\HotReloadWatcher;
 
@@ -12,6 +13,8 @@ if (count($_SERVER['argv']) <= 1) {
 }
 
 Loop::run(function () {
+    StatCache::ttl(0);
+
     $hotReloadWatcher = new HotReloadWatcher('.', ['/usr/bin/env', 'php', ...array_slice($_SERVER['argv'], 1)]);
 
     Loop::onSignal(SIGINT, static function (string $watcherId) use ($hotReloadWatcher) {
