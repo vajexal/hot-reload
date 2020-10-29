@@ -5,7 +5,6 @@ namespace Vajexal\HotReload;
 use Amp\File;
 use Amp\Loop;
 use Amp\Promise;
-use function Amp\asyncCall;
 use function Amp\call;
 
 class FilesystemWatcher
@@ -17,16 +16,16 @@ class FilesystemWatcher
 
     public function __construct(string $path, callable $callback)
     {
-        asyncCall(function () use ($path, $callback) {
+        Promise\rethrow(call(function () use ($path, $callback) {
             // Warm up cache
             yield $this->filesChanged($path);
 
             $this->watcherId = Loop::repeat(self::POOLING_INTERVAL, function () use ($path, $callback) {
                 if (yield $this->filesChanged($path)) {
-                    asyncCall($callback);
+                    Promise\rethrow(call($callback));
                 }
             });
-        });
+        }));
     }
 
     /**

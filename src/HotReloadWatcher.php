@@ -5,7 +5,6 @@ namespace Vajexal\HotReload;
 use Amp\Delayed;
 use Amp\Process\Process;
 use Amp\Promise;
-use function Amp\asyncCall;
 use function Amp\ByteStream\getStderr;
 use function Amp\ByteStream\getStdout;
 use function Amp\ByteStream\pipe;
@@ -18,21 +17,23 @@ class HotReloadWatcher
 
     public function __construct(string $path, $command)
     {
-        asyncCall(function () use ($path, $command) {
+        Promise\rethrow(call(function () use ($path, $command) {
             $this->process = yield $this->startProcess($command);
 
-            pipe($this->process->getStdout(), getStdout());
-            pipe($this->process->getStderr(), getStderr());
+            Promise\rethrow(pipe($this->process->getStdout(), getStdout()));
+            Promise\rethrow(pipe($this->process->getStderr(), getStderr()));
 
             $this->filesystemWatcher = new FilesystemWatcher($path, function () use ($command) {
                 yield $this->gracefullyStopProcess();
 
+                // todo debug loop and check watchers
+
                 $this->process = yield $this->startProcess($command);
 
-                pipe($this->process->getStdout(), getStdout());
-                pipe($this->process->getStderr(), getStderr());
+                Promise\rethrow(pipe($this->process->getStdout(), getStdout()));
+                Promise\rethrow(pipe($this->process->getStderr(), getStderr()));
             });
-        });
+        }));
     }
 
     /**
