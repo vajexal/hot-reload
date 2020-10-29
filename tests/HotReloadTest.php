@@ -9,15 +9,13 @@ use Amp\Http\Client\Request;
 use Amp\PHPUnit\AsyncTestCase;
 use Amp\Process\Process;
 
-class HotReloadTest extends AsyncTestCase
+abstract class HotReloadTest extends AsyncTestCase
 {
     private string $dir;
     private string $filepath;
 
     protected function setUpAsync()
     {
-        File\filesystem(new File\BlockingDriver);
-
         $this->dir      = __DIR__ . DIRECTORY_SEPARATOR . 'tmp';
         $this->filepath = $this->dir . DIRECTORY_SEPARATOR . 'temp.php';
 

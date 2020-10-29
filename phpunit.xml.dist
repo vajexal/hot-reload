@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <phpunit verbose="true"
-         colors="true"
-         cacheResult="false">
+         colors="true">
     <testsuites>
         <testsuite name="Hot Reload Test Suite">
             <directory>tests</directory>
