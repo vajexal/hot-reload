@@ -2,9 +2,9 @@
 
 namespace Vajexal\HotReload;
 
-use Amp\Delayed;
 use Amp\Process\Process;
 use Amp\Promise;
+use Amp\TimeoutException;
 use function Amp\ByteStream\getStderr;
 use function Amp\ByteStream\getStdout;
 use function Amp\ByteStream\pipe;
@@ -12,6 +12,8 @@ use function Amp\call;
 
 class HotReloadWatcher
 {
+    private const PROCESS_CLOSE_TIMEOUT = 50;
+
     private FilesystemWatcher $filesystemWatcher;
     private Process           $process;
 
@@ -75,21 +77,12 @@ class HotReloadWatcher
                 return;
             }
 
-            $this->process->signal(SIGINT);
-            yield new Delayed(50);
-
-            if (!$this->process->isRunning()) {
-                return;
+            try {
+                $this->process->signal(SIGINT);
+                yield Promise\timeout($this->process->join(), self::PROCESS_CLOSE_TIMEOUT);
+            } catch (TimeoutException $e) {
+                $this->process->kill();
             }
-
-            $this->process->kill();
-            yield new Delayed(50);
-
-            if (!$this->process->isRunning()) {
-                return;
-            }
-
-            yield $this->process->join();
         });
     }
 }
