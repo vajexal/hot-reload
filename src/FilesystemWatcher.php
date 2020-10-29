@@ -49,7 +49,12 @@ class FilesystemWatcher
         return call(function () use ($path) {
             $newCache = [];
 
-            $files = yield $this->scandirRecursive($path, ['./vendor', './.idea', './.git']); // todo maybe chunked or iterator
+            // todo maybe chunked or iterator
+            $files = yield $this->scandirRecursive($path, [
+                '.' . DIRECTORY_SEPARATOR . 'vendor',
+                '.' . DIRECTORY_SEPARATOR . '.idea',
+                '.' . DIRECTORY_SEPARATOR . '.git'
+            ]);
 
             foreach ($files as $file) {
                 $newCache[$file] = yield File\mtime($file);
