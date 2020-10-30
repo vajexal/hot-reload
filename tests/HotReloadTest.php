@@ -6,28 +6,10 @@ use Amp\Delayed;
 use Amp\File;
 use Amp\Http\Client\HttpClientBuilder;
 use Amp\Http\Client\Request;
-use Amp\PHPUnit\AsyncTestCase;
 use Amp\Process\Process;
 
-abstract class HotReloadTest extends AsyncTestCase
+abstract class HotReloadTest extends TestCase
 {
-    private string $dir;
-    private string $filepath;
-
-    protected function setUpAsync()
-    {
-        $this->dir      = __DIR__ . DIRECTORY_SEPARATOR . 'tmp';
-        $this->filepath = $this->dir . DIRECTORY_SEPARATOR . 'temp.php';
-
-        yield File\mkdir($this->dir);
-    }
-
-    protected function tearDownAsync()
-    {
-        yield File\unlink($this->filepath);
-        yield File\rmdir($this->dir);
-    }
-
     public function testEcho()
     {
         $this->setTimeout(10000);

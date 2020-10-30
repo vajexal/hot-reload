@@ -53,7 +53,18 @@ class HotReloadWatcher
     private function startProcess($command): Promise
     {
         return call(function () use ($command) {
-            $process = new Process($command);
+            $env = \getenv();
+
+            if ($this->hasColorSupport()) {
+                // We should tell subprocess that we support colorful output
+                $env = [
+                        'AMP_LOG_COLOR' => true, // For amphp/log
+                        'ANSICON'       => true, // For windows
+                        'TERM_PROGRAM'  => 'Hyper', // For symfony/console
+                    ] + $env;
+            }
+
+            $process = new Process($command, null, $env);
             yield $process->start();
 
             Promise\rethrow(pipe($process->getStdout(), getStdout()));
@@ -80,5 +91,31 @@ class HotReloadWatcher
                 $this->process->kill();
             }
         });
+    }
+
+    /**
+     * @return bool
+     * @link https://github.com/symfony/console/blob/v5.1.8/Output/StreamOutput.php#L94
+     */
+    private function hasColorSupport(): bool
+    {
+        // Follow https://no-color.org/
+        if (isset($_SERVER['NO_COLOR']) || false !== \getenv('NO_COLOR')) {
+            return false;
+        }
+
+        if ('Hyper' === \getenv('TERM_PROGRAM')) {
+            return true;
+        }
+
+        if (\DIRECTORY_SEPARATOR === '\\') {
+            return (\function_exists('sapi_windows_vt100_support')
+                    && @sapi_windows_vt100_support(\STDOUT))
+                || false !== \getenv('ANSICON')
+                || 'ON' === \getenv('ConEmuANSI')
+                || 'xterm' === \getenv('TERM');
+        }
+
+        return \stream_isatty(\STDOUT);
     }
 }
