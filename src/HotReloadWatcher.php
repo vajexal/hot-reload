@@ -22,18 +22,10 @@ class HotReloadWatcher
         Promise\rethrow(call(function () use ($path, $command) {
             $this->process = yield $this->startProcess($command);
 
-            Promise\rethrow(pipe($this->process->getStdout(), getStdout()));
-            Promise\rethrow(pipe($this->process->getStderr(), getStderr()));
-
             $this->filesystemWatcher = new FilesystemWatcher($path, function () use ($command) {
                 yield $this->gracefullyStopProcess();
 
-                // todo debug loop and check watchers
-
                 $this->process = yield $this->startProcess($command);
-
-                Promise\rethrow(pipe($this->process->getStdout(), getStdout()));
-                Promise\rethrow(pipe($this->process->getStderr(), getStderr()));
             });
         }));
     }
@@ -63,6 +55,10 @@ class HotReloadWatcher
         return call(function () use ($command) {
             $process = new Process($command);
             yield $process->start();
+
+            Promise\rethrow(pipe($process->getStdout(), getStdout()));
+            Promise\rethrow(pipe($process->getStderr(), getStderr()));
+
             return $process;
         });
     }
