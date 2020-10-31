@@ -9,7 +9,7 @@ use function Amp\call;
 
 class FilesystemWatcher
 {
-    const POOLING_INTERVAL = 250;
+    const POLLING_INTERVAL = 250;
 
     private array  $cache = [];
     private string $watcherId;
@@ -20,7 +20,7 @@ class FilesystemWatcher
             // Warm up cache
             yield $this->filesChanged($path);
 
-            $this->watcherId = Loop::repeat(self::POOLING_INTERVAL, function () use ($path, $callback) {
+            $this->watcherId = Loop::repeat(self::POLLING_INTERVAL, function () use ($path, $callback) {
                 if (yield $this->filesChanged($path)) {
                     Promise\rethrow(call($callback));
                 }
