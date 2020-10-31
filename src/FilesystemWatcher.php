@@ -3,7 +3,9 @@
 namespace Vajexal\HotReload;
 
 use Amp\File;
+use Amp\Iterator;
 use Amp\Loop;
+use Amp\Producer;
 use Amp\Promise;
 use function Amp\call;
 
@@ -49,14 +51,18 @@ class FilesystemWatcher
         return call(function () use ($path) {
             $newCache = [];
 
-            // todo maybe chunked or iterator
-            $files = yield $this->scandirRecursive($path, [
+            $files = $this->scandirRecursive($path, [
                 '.' . DIRECTORY_SEPARATOR . 'vendor',
                 '.' . DIRECTORY_SEPARATOR . '.idea',
-                '.' . DIRECTORY_SEPARATOR . '.git'
+                '.' . DIRECTORY_SEPARATOR . '.git',
             ]);
 
-            foreach ($files as $file) {
+            $files = Iterator\filter($files, function ($file) {
+                return \mb_substr($file, -4) === '.php';
+            });
+
+            while (yield $files->advance()) {
+                $file            = $files->getCurrent();
                 $newCache[$file] = yield File\mtime($file);
             }
 
@@ -73,13 +79,11 @@ class FilesystemWatcher
     /**
      * @param string $path
      * @param array $exclude
-     * @return Promise<array>
+     * @return Iterator
      */
-    private function scandirRecursive(string $path, array $exclude = []): Promise
+    private function scandirRecursive(string $path, array $exclude = []): Iterator
     {
-        return call(function () use ($path, $exclude) {
-            $result = [];
-
+        return new Producer(function ($emit) use ($path, $exclude) {
             $files = yield File\scandir($path);
 
             foreach ($files as $file) {
@@ -90,15 +94,17 @@ class FilesystemWatcher
                 }
 
                 if (yield File\isdir($filepath)) {
-                    $result = \array_merge($result, yield $this->scandirRecursive($filepath, $exclude));
+                    $iterator = $this->scandirRecursive($filepath, $exclude);
+
+                    while (yield $iterator->advance()) {
+                        $emit($iterator->getCurrent());
+                    }
 
                     continue;
                 }
 
-                $result[] = $filepath;
+                $emit($filepath);
             }
-
-            return $result;
         });
     }
 }
