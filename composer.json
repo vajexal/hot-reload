@@ -6,7 +6,7 @@
         "amphp"
     ],
     "require": {
-        "php": "^7.4",
+        "php": "^7.4|^8.0",
         "ext-pcntl": "*",
         "amphp/amp": "^2.5",
         "amphp/byte-stream": "^1.8",
