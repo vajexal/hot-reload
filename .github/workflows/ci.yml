@@ -42,10 +42,7 @@ jobs:
             composer-
 
       - name: Install dependencies
-        run: composer update --prefer-dist --no-interaction \
-          --ignore-platform-req=ext-parallel \
-          --ignore-platform-req=ext-eio \
-          --ignore-platform-req=ext-uv
+        run: composer update --prefer-dist --no-interaction --ignore-platform-req=ext-parallel --ignore-platform-req=ext-eio --ignore-platform-req=ext-uv
 
       - name: Check code style
         run: vendor/bin/php-cs-fixer fix --config=.php_cs.dist --verbose --diff --dry-run
