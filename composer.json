@@ -19,7 +19,7 @@
         "amphp/http-client": "^4.5",
         "amphp/http-server": "^2.1",
         "amphp/log": "^1.1",
-        "amphp/php-cs-fixer-config": "dev-master",
+        "amphp/php-cs-fixer-config": "dev-master#e8930dcb166f4bcbc8bd3c37e5535bd8960ffea9",
         "amphp/phpunit-util": "^1.4",
         "symfony/console": "^5.1"
     },
