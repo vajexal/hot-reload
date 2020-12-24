@@ -1,5 +1,7 @@
 Attempt to make hot reloading for php scripts ([Amp](https://amphp.org) for example)
 
+[![Build Status](https://github.com/vajexal/hot-reload/workflows/Build/badge.svg)](https://github.com/vajexal/hot-reload/actions)
+
 ### Installation
 
 ```bash
