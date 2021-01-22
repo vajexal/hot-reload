@@ -7,17 +7,22 @@ use Amp\Iterator;
 use Amp\Loop;
 use Amp\Producer;
 use Amp\Promise;
+use Vajexal\HotReload\PathFilter\NullPathFilter;
+use Vajexal\HotReload\PathFilter\PathFilter;
 use function Amp\call;
 
 class FilesystemWatcher
 {
     const POLLING_INTERVAL = 250;
 
-    private array  $cache = [];
-    private string $watcherId;
+    private PathFilter $pathFilter;
+    private array      $cache = [];
+    private string     $watcherId;
 
-    public function __construct(string $path, callable $callback)
+    public function __construct(string $path, callable $callback, ?PathFilter $pathFilter = null)
     {
+        $this->pathFilter = $pathFilter ?: new NullPathFilter;
+
         Promise\rethrow(call(function () use ($path, $callback) {
             // Warm up cache
             yield $this->filesChanged($path);
@@ -51,14 +56,10 @@ class FilesystemWatcher
         return call(function () use ($path) {
             $newCache = [];
 
-            $files = $this->scandirRecursive($path, [
-                '.' . DIRECTORY_SEPARATOR . 'vendor',
-                '.' . DIRECTORY_SEPARATOR . '.idea',
-                '.' . DIRECTORY_SEPARATOR . '.git',
-            ]);
+            $files = $this->scandirRecursive($path);
 
             $files = Iterator\filter($files, function ($file) {
-                return \mb_substr($file, -4) === '.php';
+                return \fnmatch('*.php', $file);
             });
 
             while (yield $files->advance()) {
@@ -78,23 +79,22 @@ class FilesystemWatcher
 
     /**
      * @param string $path
-     * @param array $exclude
      * @return Iterator
      */
-    private function scandirRecursive(string $path, array $exclude = []): Iterator
+    private function scandirRecursive(string $path): Iterator
     {
-        return new Producer(function ($emit) use ($path, $exclude) {
+        return new Producer(function ($emit) use ($path) {
             $files = yield File\scandir($path);
 
             foreach ($files as $file) {
                 $filepath = $path . DIRECTORY_SEPARATOR . $file;
 
-                if (\in_array($filepath, $exclude, true)) {
+                if (!$this->pathFilter->match($filepath)) {
                     continue;
                 }
 
                 if (yield File\isdir($filepath)) {
-                    $iterator = $this->scandirRecursive($filepath, $exclude);
+                    $iterator = $this->scandirRecursive($filepath);
 
                     while (yield $iterator->advance()) {
                         $emit($iterator->getCurrent());

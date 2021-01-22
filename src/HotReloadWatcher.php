@@ -5,6 +5,7 @@ namespace Vajexal\HotReload;
 use Amp\Process\Process;
 use Amp\Promise;
 use Amp\TimeoutException;
+use Vajexal\HotReload\PathFilter\PathFilter;
 use function Amp\ByteStream\getStderr;
 use function Amp\ByteStream\getStdout;
 use function Amp\ByteStream\pipe;
@@ -17,16 +18,16 @@ class HotReloadWatcher
     private FilesystemWatcher $filesystemWatcher;
     private Process           $process;
 
-    public function __construct(string $path, $command)
+    public function __construct(string $path, array $command, PathFilter $pathFilter = null)
     {
-        Promise\rethrow(call(function () use ($path, $command) {
+        Promise\rethrow(call(function () use ($path, $command, $pathFilter) {
             $this->process = yield $this->startProcess($command);
 
             $this->filesystemWatcher = new FilesystemWatcher($path, function () use ($command) {
                 yield $this->gracefullyStopProcess();
 
                 $this->process = yield $this->startProcess($command);
-            });
+            }, $pathFilter);
         }));
     }
 
@@ -47,10 +48,10 @@ class HotReloadWatcher
     }
 
     /**
-     * @param array|string $command
+     * @param array $command
      * @return Promise<Process>
      */
-    private function startProcess($command): Promise
+    private function startProcess(array $command): Promise
     {
         return call(function () use ($command) {
             $env = \getenv();
@@ -58,10 +59,10 @@ class HotReloadWatcher
             if ($this->hasColorSupport()) {
                 // We should tell subprocess that we support colorful output
                 $env = [
-                        'AMP_LOG_COLOR' => true, // For amphp/log
-                        'ANSICON'       => true, // For windows
-                        'TERM_PROGRAM'  => 'Hyper', // For symfony/console
-                    ] + $env;
+                           'AMP_LOG_COLOR' => true, // For amphp/log
+                           'ANSICON'       => true, // For windows
+                           'TERM_PROGRAM'  => 'Hyper', // For symfony/console
+                       ] + $env;
             }
 
             $process = new Process($command, null, $env);
@@ -111,9 +112,9 @@ class HotReloadWatcher
         if (\DIRECTORY_SEPARATOR === '\\') {
             return (\function_exists('sapi_windows_vt100_support')
                     && @sapi_windows_vt100_support(\STDOUT))
-                || false !== \getenv('ANSICON')
-                || 'ON' === \getenv('ConEmuANSI')
-                || 'xterm' === \getenv('TERM');
+                   || false !== \getenv('ANSICON')
+                   || 'ON' === \getenv('ConEmuANSI')
+                   || 'xterm' === \getenv('TERM');
         }
 
         return \stream_isatty(\STDOUT);

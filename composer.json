@@ -11,7 +11,8 @@
         "amphp/amp": "^2.5",
         "amphp/byte-stream": "^1.8",
         "amphp/file": "^1.0",
-        "amphp/process": "^1.1"
+        "amphp/process": "^1.1",
+        "symfony/polyfill-php80": "^1.22"
     },
     "require-dev": {
         "ext-eio": "*",
