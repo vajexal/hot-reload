@@ -58,10 +58,6 @@ class FilesystemWatcher
 
             $files = $this->scandirRecursive($path);
 
-            $files = Iterator\filter($files, function ($file) {
-                return \fnmatch('*.php', $file);
-            });
-
             while (yield $files->advance()) {
                 $file            = $files->getCurrent();
                 $newCache[$file] = yield File\mtime($file);
@@ -89,17 +85,21 @@ class FilesystemWatcher
             foreach ($files as $file) {
                 $filepath = $path . DIRECTORY_SEPARATOR . $file;
 
-                if (!$this->pathFilter->match($filepath)) {
-                    continue;
-                }
-
                 if (yield File\isdir($filepath)) {
+                    if (!$this->pathFilter->matchDir($filepath)) {
+                        continue;
+                    }
+
                     $iterator = $this->scandirRecursive($filepath);
 
                     while (yield $iterator->advance()) {
                         $emit($iterator->getCurrent());
                     }
 
+                    continue;
+                }
+
+                if (!$this->pathFilter->matchFile($filepath)) {
                     continue;
                 }
 

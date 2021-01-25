@@ -6,5 +6,6 @@ namespace Vajexal\HotReload\PathFilter;
 
 interface PathFilter
 {
-    public function match(string $filepath): bool;
+    public function matchDir(string $filepath): bool;
+    public function matchFile(string $filepath): bool;
 }

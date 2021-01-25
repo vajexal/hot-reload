@@ -7,6 +7,7 @@
     ],
     "require": {
         "php": "^7.4|^8.0",
+        "ext-mbstring": "*",
         "ext-pcntl": "*",
         "amphp/amp": "^2.5",
         "amphp/byte-stream": "^1.8",

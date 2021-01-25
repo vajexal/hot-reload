@@ -16,11 +16,11 @@ if (count($_SERVER['argv']) <= 1) {
 Loop::run(function () {
     StatCache::ttl(0);
 
-    $pathFilter = new GlobPathFilter([
-        'vendor',
-        '.git',
-        '.idea',
-    ]);
+    $pathFilter = (new GlobPathFilter)
+        ->exclude('vendor')
+        ->exclude('.git')
+        ->exclude('.idea')
+        ->filePattern('*.php');
 
     $hotReloadWatcher = new HotReloadWatcher('.', [PHP_BINARY, ...array_slice($_SERVER['argv'], 1)], $pathFilter);
 

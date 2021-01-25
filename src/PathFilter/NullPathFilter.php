@@ -6,7 +6,12 @@ namespace Vajexal\HotReload\PathFilter;
 
 class NullPathFilter implements PathFilter
 {
-    public function match(string $filepath): bool
+    public function matchDir(string $filepath): bool
+    {
+        return true;
+    }
+
+    public function matchFile(string $filepath): bool
     {
         return true;
     }
