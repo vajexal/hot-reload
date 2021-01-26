@@ -33,6 +33,10 @@ class FilesystemWatcher
                 $changedFiles = yield $this->changedFiles($path);
 
                 if ($changedFiles->hasChanges()) {
+                    if (\getenv('HOTRELOAD_CLEAR_SCREEN')) {
+                        yield $this->clearScreen();
+                    }
+
                     if (\getenv('HOTRELOAD_LOG_CHANGED_FILES')) {
                         $changes = \array_merge(
                             \array_map(fn ($filepath) => \sprintf('Added: %s', $filepath), $changedFiles->getAdded()),
@@ -118,5 +122,10 @@ class FilesystemWatcher
                 $emit($filepath);
             }
         });
+    }
+
+    private function clearScreen(): Promise
+    {
+        return getStdout()->write("\033[2J\033[;H");
     }
 }
