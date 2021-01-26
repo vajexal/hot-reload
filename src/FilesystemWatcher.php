@@ -9,6 +9,7 @@ use Amp\Producer;
 use Amp\Promise;
 use Vajexal\HotReload\PathFilter\NullPathFilter;
 use Vajexal\HotReload\PathFilter\PathFilter;
+use function Amp\ByteStream\getStdout;
 use function Amp\call;
 
 class FilesystemWatcher
@@ -25,11 +26,24 @@ class FilesystemWatcher
 
         Promise\rethrow(call(function () use ($path, $callback) {
             // Warm up cache
-            yield $this->filesChanged($path);
+            yield $this->changedFiles($path);
 
             $this->watcherId = Loop::repeat(self::POLLING_INTERVAL, function () use ($path, $callback) {
-                if (yield $this->filesChanged($path)) {
-                    Promise\rethrow(call($callback));
+                /** @var ChangedFiles $changedFiles */
+                $changedFiles = yield $this->changedFiles($path);
+
+                if ($changedFiles->hasChanges()) {
+                    if (\getenv('HOTRELOAD_LOG_CHANGED_FILES')) {
+                        $changes = \array_merge(
+                            \array_map(fn ($filepath) => \sprintf('Added: %s', $filepath), $changedFiles->getAdded()),
+                            \array_map(fn ($filepath) => \sprintf('Modified: %s', $filepath), $changedFiles->getModified()),
+                            \array_map(fn ($filepath) => \sprintf('Deleted: %s', $filepath), $changedFiles->getDeleted())
+                        );
+
+                        yield getStdout()->write(PHP_EOL . \implode(PHP_EOL, $changes) . PHP_EOL . PHP_EOL);
+                    }
+
+                    yield call($callback);
                 }
             });
         }));
@@ -49,9 +63,9 @@ class FilesystemWatcher
 
     /**
      * @param string $path
-     * @return Promise<bool>
+     * @return Promise<ChangedFiles>
      */
-    private function filesChanged(string $path): Promise
+    private function changedFiles(string $path): Promise
     {
         return call(function () use ($path) {
             $newCache = [];
@@ -63,13 +77,11 @@ class FilesystemWatcher
                 $newCache[$file] = yield File\mtime($file);
             }
 
-            \ksort($newCache);
-
-            $filesChanged = $this->cache !== $newCache;
+            $changedFiles = ChangedFiles::fromCachesDiff($this->cache, $newCache);
 
             $this->cache = $newCache;
 
-            return $filesChanged;
+            return $changedFiles;
         });
     }
 
