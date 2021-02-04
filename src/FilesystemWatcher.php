@@ -20,24 +20,24 @@ class FilesystemWatcher
     private array      $cache = [];
     private string     $watcherId;
 
-    public function __construct(string $path, callable $callback, ?PathFilter $pathFilter = null)
+    public function __construct(string $path, callable $callback, Config $config, ?PathFilter $pathFilter = null)
     {
         $this->pathFilter = $pathFilter ?: new NullPathFilter;
 
-        Promise\rethrow(call(function () use ($path, $callback) {
+        Promise\rethrow(call(function () use ($path, $callback, $config) {
             // Warm up cache
             yield $this->changedFiles($path);
 
-            $this->watcherId = Loop::repeat(self::POLLING_INTERVAL, function () use ($path, $callback) {
+            $this->watcherId = Loop::repeat(self::POLLING_INTERVAL, function () use ($path, $callback, $config) {
                 /** @var ChangedFiles $changedFiles */
                 $changedFiles = yield $this->changedFiles($path);
 
                 if ($changedFiles->hasChanges()) {
-                    if (\getenv('HOTRELOAD_CLEAR_SCREEN')) {
+                    if ($config->shouldClearScreen()) {
                         yield $this->clearScreen();
                     }
 
-                    if (\getenv('HOTRELOAD_LOG_CHANGED_FILES')) {
+                    if ($config->shouldLogChanges()) {
                         $changes = \array_merge(
                             \array_map(fn ($filepath) => \sprintf('Added: %s', $filepath), $changedFiles->getAdded()),
                             \array_map(fn ($filepath) => \sprintf('Modified: %s', $filepath), $changedFiles->getModified()),

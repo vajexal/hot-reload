@@ -6,8 +6,8 @@ namespace Vajexal\HotReload\PathFilter;
 
 class GlobPathFilter implements PathFilter
 {
-    private array  $excludeDirPatterns;
-    private string $filePattern;
+    private array  $excludeDirPatterns = [];
+    private string $filePattern        = '';
 
     public function exclude(string $pattern): self
     {

@@ -18,16 +18,16 @@ class HotReloadWatcher
     private FilesystemWatcher $filesystemWatcher;
     private Process           $process;
 
-    public function __construct(string $path, array $command, PathFilter $pathFilter = null)
+    public function __construct(string $path, array $command, Config $config, PathFilter $pathFilter = null)
     {
-        Promise\rethrow(call(function () use ($path, $command, $pathFilter) {
+        Promise\rethrow(call(function () use ($path, $command, $config, $pathFilter) {
             $this->process = yield $this->startProcess($command);
 
             $this->filesystemWatcher = new FilesystemWatcher($path, function () use ($command) {
                 yield $this->gracefullyStopProcess();
 
                 $this->process = yield $this->startProcess($command);
-            }, $pathFilter);
+            }, $config, $pathFilter);
         }));
     }
 

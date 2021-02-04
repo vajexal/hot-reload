@@ -3,26 +3,33 @@
 
 use Amp\File\StatCache;
 use Amp\Loop;
+use Vajexal\HotReload\Config;
+use Vajexal\HotReload\ConfigException;
 use Vajexal\HotReload\HotReloadWatcher;
 use Vajexal\HotReload\PathFilter\GlobPathFilter;
 
 require_once 'vendor/autoload.php';
 
-if (count($_SERVER['argv']) <= 1) {
+try {
+    $config = Config::createFromArgv();
+} catch (ConfigException $e) {
     echo 'Usage: ./vendor/bin/hot-reload server.php', PHP_EOL;
+
     exit(1);
 }
 
-Loop::run(function () {
+Loop::run(function () use ($config) {
     StatCache::ttl(0);
 
-    $pathFilter = (new GlobPathFilter)
-        ->exclude('vendor')
-        ->exclude('.git')
-        ->exclude('.idea')
-        ->filePattern('*.php');
+    $pathFilter = new GlobPathFilter;
 
-    $hotReloadWatcher = new HotReloadWatcher('.', [PHP_BINARY, ...array_slice($_SERVER['argv'], 1)], $pathFilter);
+    foreach ($config->getExcludePatterns() as $pattern) {
+        $pathFilter->exclude($pattern);
+    }
+
+    $pathFilter->filePattern($config->getFilePattern());
+
+    $hotReloadWatcher = new HotReloadWatcher('.', [PHP_BINARY, ...$config->getCommand()], $config, $pathFilter);
 
     Loop::onSignal(SIGINT, static function (string $watcherId) use ($hotReloadWatcher) {
         Loop::cancel($watcherId);
