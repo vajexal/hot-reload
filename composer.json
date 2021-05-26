@@ -5,6 +5,7 @@
         "hot reload",
         "amphp"
     ],
+    "license": "Unlicense",
     "require": {
         "php": "^7.4|^8.0",
         "ext-mbstring": "*",
